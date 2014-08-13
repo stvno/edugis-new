@@ -1,0 +1,30 @@
+{
+  "name": "EduGIS",
+  "version": "0.0.0",
+  "description": "Nieuwe versie van de EduGIS kaart viewer",
+  "main": "index.html",
+  "keywords": [
+    "EduGIS",
+    "gis",
+    "webgis",
+    "ol3"
+  ],
+  "authors": [
+    "Steven M. Ottens"
+  ],
+  "license": "MIT",
+  "homepage": "http://kaart.edugis.nl",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "ol3-unofficial": "~3.0.0-gamma.3.upd1",
+    "polymer": "Polymer/polymer#~0.3.5",
+    "core-elements": "Polymer/core-elements#~0.3.5",
+    "paper-elements": "Polymer/paper-elements#~0.3.5"
+  }
+}
