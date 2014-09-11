@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="bower_components/platform/platform.js"></script>
+    <link rel="import" href="bower_components/paper-elements/paper-elements.html">
+	<link rel="import" href="bower_components/core-elements/core-elements.html">
+	<link rel="import" href="elements/gdn-map.html">
+
+<style>
+body {
+  font-family: sans-serif;
+}
+
+core-toolbar {
+  background-color: #3f51b5;
+  color: white;
+}
+
+core-header-panel[drawer] core-toolbar {
+background: #1a237e;
+}
+.content {
+    padding: 20px;
+  }
+   /* [END styles] */
+  /* secret demo-only styles */
+  core-scaffold /deep/ #drawer {
+    width: 140px;
+  }
+  core-scaffold /deep/ #main {
+    left: 140px;
+  }
+</style>
+  </head>
+  <body fullbleed unresolved>
+   <core-scaffold>
+
+    <core-header-panel navigation flex>
+      <core-toolbar id="navheader">
+        <span>Menu</span>
+      </core-toolbar>
+      <core-menu>
+        <core-item label="One"></core-item>
+        <core-item label="Two"></core-item>
+      </core-menu>
+    </core-header-panel>
+    
+    <span tool>Title</span>
+
+   <gdn-map></gdn-map>
+  </core-scaffold>
+  
+  <!--
+<core-drawer-panel rightDrawer>
+  <core-header-panel drawer>
+    <core-toolbar>
+	
+	Kaartlagen
+	</core-toolbar>
+	
+    <core-item draggable="true" class="card paper-shadow-top paper-shadow-top-z-1" icon="settings" label="OSM" horizontal
+	center layout> <paper-shadow z="1"></paper-shadow></core-item>
+   <core-item class="card paper-shadow-top paper-shadow-top-z-1" icon="settings" label="OSM" horizontal center layout> <paper-shadow z="1"></paper-shadow></core-item>
+	</core-header-panel>
+  <core-header-panel main>
+    <core-toolbar>
+	<paper-tabs class="fit top" selected="0" style="width:400px;" role="tablist" self-end>
+	<paper-tab role="tab">navigeren
+	</paper-tab>
+	<paper-tab role="tab">tekenen</paper-tab>
+	<paper-tab role="tab">analyseren</paper-tab>
+	</paper-tabs>
+	</core-toolbar>
+	
+	 gdaldem color-relief $file -nearest_color_entry ../../class.map ../../50cm_int_fill_color/$file
+raster2pgsql /var/data/geodata/ahn2/50cm_int/i45e*.tif -R -F -I -a maaiveld -t 100x100 > i45e.sql
+c
+   <gdn-map></gdn-map>
+  </core-header-panel>
+  <core-toolbar>bla</core-toolbar>
+</core-drawer-panel>
+  -->
+  <!--
+   <core-header-panel >
+    <core-toolbar id="mainheader" >
+<core-menu selected="0">
+  <core-item icon="settings" label="Settings"></core-item>
+  <core-item icon="dialog" label="Dialog"></core-item>
+  <core-item icon="search" label="Search"></core-item>
+</core-menu>
+  <div class="bottom" flex=""></div>
+  <paper-icon-button class="bottom" icon="search" role="button" tabindex="0" aria-label="search"></paper-icon-button>
+    </core-toolbar>
+  <gdn-map></gdn-map>
+  </core-header-panel>
+  -->
+  </body>
+</html>
