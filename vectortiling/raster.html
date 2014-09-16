@@ -1,0 +1,200 @@
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Reprojected Raster Tiles</title>
+<style>
+.breadcrumbs {
+  font-size: small;
+  text-align: center;
+  width: 100%;
+  padding: 5px 0;
+  margin: 0;
+  font-style: italic;
+  border-bottom: solid #eee 1px;
+  color: #000;
+}
+
+.breadcrumbs a {
+  color: #669;
+}
+
+.breadcrumbs a:hover {
+  color: #000;
+}
+
+p.cite {
+  text-align: right;
+  font-size: small;
+  font-style: italic;
+}
+
+p.cite, p.cite a, p.caption, p.caption a {
+  color: #666;
+}
+
+p.caption {
+  text-align: center;
+  font-size: small;
+  font-style: italic;
+  width: 400px;
+  margin: 0 auto;
+}
+
+body {
+  margin-top: 0;
+  font-family: Georgia, serif;
+  text-align: center;
+  background: #fff;
+}
+
+p, li {
+  line-height: 1.5em;
+}
+
+h1, h2, h3 {
+  font-weight: 300;
+}
+
+h1 {
+  font-size: 2.5em;
+}
+
+canvas {
+  cursor: move;
+}
+
+.wrapper {
+  width: 600px;
+  margin: 1em auto;
+  text-align: left;
+}
+
+.center {
+  text-align: center;
+}
+
+.thumb {
+  width: 200px;
+  height: 220px;
+  text-align: center;
+  float: left;
+}
+
+.thumb img {
+  width: 200px;
+  height: 174px;
+  border: none;
+}
+
+.clear {
+  clear: both;
+}
+
+blockquote {
+  border-left: solid #eee 5px;
+  padding: 0 15px;
+  margin: 0;
+}
+
+#map {
+  position: relative;
+  margin: 0 auto;
+  overflow: hidden;
+  border: solid 1px grey;
+}
+
+.tile {
+  position: absolute;
+  border: solid 1px red;
+}
+
+.tile.loading {
+  display: none;
+}
+
+.tile path {
+ 
+  stroke: #000;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.tile .major_road { stroke: #776; }
+.tile .minor_road { stroke: #ccb; }
+.tile .highway { stroke: #f39; stroke-width: 1.5px; }
+.tile .rail { stroke: #7de; }
+
+
+.q0-9 { fill:rgb(247,251,255); }
+.q1-9 { fill:rgb(222,235,247); }
+.q2-9 { fill:rgb(198,219,239); }
+.q3-9 { fill:rgb(158,202,225); }
+.q4-9 { fill:rgb(107,174,214); }
+.q5-9 { fill:rgb(66,146,198); }
+.q6-9 { fill:rgb(33,113,181); }
+.q7-9 { fill:rgb(8,81,156); }
+.q8-9 { fill:rgb(8,48,107); }
+</style>
+<div id="map"></div>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/d3.geo.tile.v0.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="http://www.jasondavies.com/maps/d3.geo.projection.min.js"></script>
+<script src="http://www.jasondavies.com/maps/rotate/d3.geo.zoom.js"></script>
+
+
+<script src="http://www.jasondavies.com/maps/d3.quadtiles.js"></script>
+<script src="http://www.jasondavies.com/maps/raster/d3.geo.raster.js"></script>
+<script src="d3.geo.vector.js"></script>
+<script>
+
+var rateById = d3.map();
+
+var quantize = d3.scale.quantize()
+    .domain([0, 100])
+    .range(d3.range(9).map(function(i) { return "q" + i + "-9"; }));
+	
+queue()
+    .defer(d3.tsv, "buurten.tsv", function(d) { 
+	rateById.set(d.BU_CODE, +d.P_GEHUWD);
+	});
+
+var ratio = window.devicePixelRatio || 1,
+    width = 960 * ratio,
+    height = 600 * ratio,
+    p = .5 * ratio;
+
+var projection = d3.geo.albers()
+    .rotate([0, 0])
+    .center([0, 52])
+    .scale(150 * ratio)
+    .translate([width / 2, height / 2])
+    .clipExtent([[p, p], [width - p, height - p]]);
+
+var vector = d3.geo.vector(projection)
+    .scaleExtent([0, 14])
+    .url("/buurtenid/{z}/{x}/{y}.topojson");
+
+var layer = d3.select("#map")
+    .style("width", width / ratio + "px")
+    .style("height", height / ratio + "px")
+    .call(d3.behavior.zoom()
+      .translate([.5 * width / ratio, .5 * height / ratio])
+      .scale(projection.scale() / ratio)
+      .scaleExtent([1e2, 5e6])
+      .on("zoom", function() {
+        var t = d3.event.translate,
+            s = d3.event.scale;
+        projection.translate([t[0] * ratio, t[1] * ratio]).scale(s * ratio);
+        layer.call(vector);
+      }))
+  .append("div")
+    .style(prefix + "transform", "scale(" + 1 / ratio + ")")
+    .style(prefix + "transform-origin", "0 0 0")
+  .append("div")
+    .style(prefix + "transform-origin", "0 0 0")
+    .call(vector);
+
+</script>
