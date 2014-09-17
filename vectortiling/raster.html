@@ -105,7 +105,7 @@ blockquote {
 
 .tile {
   position: absolute;
-  border: solid 1px red;
+
 }
 
 .tile.loading {
@@ -113,10 +113,8 @@ blockquote {
 }
 
 .tile path {
- 
-  stroke: #000;
-  stroke-linejoin: round;
-  stroke-linecap: round;
+
+stroke:black;
 }
 
 .tile .major_road { stroke: #776; }
@@ -136,18 +134,18 @@ blockquote {
 .q8-9 { fill:rgb(8,48,107); }
 </style>
 <div id="map"></div>
-
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://d3js.org/d3.geo.tile.v0.min.js"></script>
 <script src="http://d3js.org/queue.v1.min.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
-<script src="http://www.jasondavies.com/maps/d3.geo.projection.min.js"></script>
+<script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
 <script src="http://www.jasondavies.com/maps/rotate/d3.geo.zoom.js"></script>
 
 
 <script src="http://www.jasondavies.com/maps/d3.quadtiles.js"></script>
 <script src="http://www.jasondavies.com/maps/raster/d3.geo.raster.js"></script>
 <script src="d3.geo.vector.js"></script>
+
 <script>
 
 var rateById = d3.map();
@@ -159,23 +157,28 @@ var quantize = d3.scale.quantize()
 queue()
     .defer(d3.tsv, "buurten.tsv", function(d) { 
 	rateById.set(d.BU_CODE, +d.P_GEHUWD);
-	});
-
+	})
+	.await(ready);
+	
+function ready(error, cbs){
+var projection;
 var ratio = window.devicePixelRatio || 1,
-    width = 960 * ratio,
-    height = 600 * ratio,
+    width = 1280 * ratio,
+    height = 1024 * ratio,
     p = .5 * ratio;
 
-var projection = d3.geo.albers()
+projection = d3.geo.berghaus()
     .rotate([0, 0])
-    .center([0, 52])
-    .scale(150 * ratio)
+    .center([5, 52.4])
+    .scale(80000 * ratio)
     .translate([width / 2, height / 2])
     .clipExtent([[p, p], [width - p, height - p]]);
 
-var vector = d3.geo.vector(projection)
+var vector = d3.geo.vector(projection,function(d) { 
+			  return quantize(rateById.get(d.properties.bu_code)); 
+			  })
     .scaleExtent([0, 14])
-    .url("/buurtenid/{z}/{x}/{y}.topojson");
+    .url("/buurtenidclip/{z}/{x}/{y}.topojson");
 
 var layer = d3.select("#map")
     .style("width", width / ratio + "px")
@@ -196,5 +199,8 @@ var layer = d3.select("#map")
   .append("div")
     .style(prefix + "transform-origin", "0 0 0")
     .call(vector);
-
+	
+	
+	
+}
 </script>
