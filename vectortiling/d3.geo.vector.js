@@ -68,6 +68,7 @@ d3.geo.vector = function(projection,style) {
             })
             .enter().append("path")
             .attr("class", style)
+			.attr("key", k[0]+'-'+k[1])
             .attr("d", path);
     }
     d3.select(svg)

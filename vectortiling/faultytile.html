@@ -1,0 +1,58 @@
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+svg {
+border: solid 1px grey;
+}
+ path {
+ stroke: black;
+ fill: red;
+ opacity: 0.5;
+ stroke-width: 4;
+}
+
+</style>
+<body>
+<h1><a href="workingtile.html">working</a> <=> <a href="faultytile.html">faulty</a> <=> <a href="faultytile-zoomin.html">faulty zoomed in</a></h1>
+Rendering a (topojson) polygon in <a href="http://d3js.org">D3</a> is direction-sensitive see this <a href="https://github.com/mbostock/d3/wiki/Geo-Paths#_path"><b>important</b></a> bit. However what is the direction of four points in one line <a href="#star">*)</a>?<br/> Apparently <a href="http://tilestache.org/">tilestache</a> has a different view than D3 :(  if we first move 1 down, 1 left, then again 1 down, 1 left and close with a 2 up, 2 right D3 draws a line, but first 2 left, 2 down and then twice 1 up, 1 right it creates an infinite area with a line shaped hole.<br/>
+
+
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script>
+
+
+var width = 1200,
+    height = 700;
+	
+var projection = d3.geo.mercator()
+    .center([5.128, 52.3266])
+    .scale(6000000)
+    .precision(.1);
+
+var path = d3.geo.path()
+    .projection(projection);
+
+var graticule = d3.geo.graticule();
+
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+d3.json("faultytile.topojson", function(error, json) {
+  svg.append("path")
+      .datum(topojson.feature(json, json.objects.vectile))
+      .attr("d", path);
+});
+
+</script>
+<p>topojson:
+{"objects":{"vectile":{"type":"GeometryCollection","geometries":[{"arcs":[[[0]]],"type":"Polygon","properties":{}}]}},"type":"Topology","transform":{"translate":[4.92187499999995,52.268157373768176],"scale":[0.00034332275390630204,0.00020959262530276246]},"arcs":[[[609,278],<b style="color:red">[-2,-2],[1,1],[1,1]</b>]]}
+</p>
+
+<a name="star">*)</a> yes I know it should just be a line, but this is the result of TileStache simplifying a polygon up to a flat triangle
+<hr/>
+<a href="https://twitter.com/stvno">@stvno</a>

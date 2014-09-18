@@ -175,7 +175,7 @@ projection = d3.geo.berghaus()
     .clipExtent([[p, p], [width - p, height - p]]);
 
 var vector = d3.geo.vector(projection,function(d) { 
-			  return quantize(rateById.get(d.properties.bu_code)); 
+			  return quantize(rateById.get(d.properties.bu_code)) + ' ' + d.properties.bu_code; 
 			  })
     .scaleExtent([0, 14])
     .url("/buurtenidclip/{z}/{x}/{y}.topojson");
