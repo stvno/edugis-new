@@ -17,7 +17,11 @@
 .breadcrumbs a {
   color: #669;
 }
-
+.selected {
+	stroke: red !important;
+	stroke-width: 2;
+	fill: red !important;
+}
 .breadcrumbs a:hover {
   color: #000;
 }
@@ -134,7 +138,7 @@ stroke:black;
 .q8-9 { fill:rgb(8,48,107); }
 </style>
 <div id="map"></div>
-<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="../bower_components/d3/d3.js"></script>
 <script src="http://d3js.org/d3.geo.tile.v0.min.js"></script>
 <script src="http://d3js.org/queue.v1.min.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
@@ -178,7 +182,7 @@ var vector = d3.geo.vector(projection,function(d) {
 			  return quantize(rateById.get(d.properties.bu_code)) + ' ' + d.properties.bu_code; 
 			  })
     .scaleExtent([0, 14])
-    .url("/buurtenidclip/{z}/{x}/{y}.topojson");
+    .url("/buurtenid/{z}/{x}/{y}.topojson");
 
 var layer = d3.select("#map")
     .style("width", width / ratio + "px")

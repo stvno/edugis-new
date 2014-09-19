@@ -1,5 +1,8 @@
 // Copyright 2014, Jason Davies, http://www.jasondavies.com/
 // modified by Steven M. Ottens https://github.com/stvno
+//SMO global json
+var gjson = {};
+var gid = [];
 (function() {
 
 d3.geo.vector = function(projection,style) {
@@ -36,6 +39,20 @@ d3.geo.vector = function(projection,style) {
   }
   
   function onload(d, svg, pot, json) {
+  
+	var tmp = topojson.mesh(json, json.objects.vectile,function(a,b){
+var id = a.properties.bu_code;
+				if(gid.indexOf(id)<0){
+				gid.push(id);
+				gjson[id]=d;
+				}
+				else {
+				f = gjson[id];
+				};
+	
+	});
+				
+	
     var t = projection.translate(),
         s = projection.scale(),
         c = projection.clipExtent(),
@@ -62,14 +79,19 @@ d3.geo.vector = function(projection,style) {
         path.projection()
             .translate([-x0,-y0])
              
-        d3.select(svg).selectAll("path")
+       var feat =  d3.select(svg).selectAll("path")
             .data(topojson.feature(json, json.objects.vectile).features,function(d){
+				
                 return d.properties.bu_code;
             })
             .enter().append("path")
             .attr("class", style)
-			.attr("key", k[0]+'-'+k[1])
+			.attr("key", function(d){ 
+			return d.properties.bu_code
+			})
             .attr("d", path);
+		
+		
     }
     d3.select(svg)
         .style("left", x0 + "px")
