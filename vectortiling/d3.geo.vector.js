@@ -3,10 +3,12 @@
 //SMO global json
 var gjson = {};
 var gid = [];
+var G1, G2, G3, G4, G5;
+var path;
 (function() {
 
 d3.geo.vector = function(projection,style) {
-  var path = d3.geo.path().projection(projection),
+   path = d3.geo.path().projection(projection),
       url = null,      
       scaleExtent = [0, Infinity],
       subdomains = ["a", "b", "c", "d"];  
@@ -21,7 +23,7 @@ d3.geo.vector = function(projection,style) {
         ds = projection.scale() / (1 << pot),
         t = projection.translate();
 
-    layer.style(prefix + "transform", "translate(" + t.map(pixel) + ")scale(" + ds + ")");
+    layer.style(prefix + "transform", "translate(" + t.map(pixel) + ")scale(" + ds + ")").attr("class","test");
 
     var tile = layer.selectAll(".tile")
         .data(d3.quadTiles(projection, z), key);
@@ -39,18 +41,32 @@ d3.geo.vector = function(projection,style) {
   }
   
   function onload(d, svg, pot, json) {
-  
-	var tmp = topojson.mesh(json, json.objects.vectile,function(a,b){
-var id = a.properties.bu_code;
-				if(gid.indexOf(id)<0){
-				gid.push(id);
-				gjson[id]=d;
+
+	var features = topojson.feature(json, json.objects.vectile);
+
+
+	features.features.forEach(function(f){					
+				var id = f.id;
+				var key = d.key.toString();		
+					if(!f.type) {
+					console.log(f)
+					}
+				if(!gjson[id]){
+					var item = {};
+					item.feature = {};
+					item.feature.properties  = f.properties;
+					item.feature.id = f.id;
+					item.feature.type = f.type;
+					item.geoms = {};
+					item.geoms[key] = f.geometry;
+					gjson[id] = item;
 				}
 				else {
-				f = gjson[id];
+					gjson[id].geoms[key] = f.geometry;
+					gjson[id].merged = true;
 				};
-	
 	});
+	
 				
 	
     var t = projection.translate(),

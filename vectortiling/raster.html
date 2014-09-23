@@ -13,6 +13,11 @@
   border-bottom: solid #eee 1px;
   color: #000;
 }
+.mergelaag {
+-webkit-transform: translate(-1280px, -512px) scale(0.8192);
+position: absolute;
+z-index: 100;
+}
 
 .breadcrumbs a {
   color: #669;
@@ -107,7 +112,7 @@ blockquote {
   border: solid 1px grey;
 }
 
-.tile {
+.tile, .laag {
   position: absolute;
 
 }
@@ -116,6 +121,9 @@ blockquote {
   display: none;
 }
 
+.laag path {
+	stroke:red;
+}
 .tile path {
 
 stroke:black;
@@ -145,7 +153,7 @@ stroke:black;
 <script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
 <script src="http://www.jasondavies.com/maps/rotate/d3.geo.zoom.js"></script>
 
-
+<script src="turf.js"></script>
 <script src="http://www.jasondavies.com/maps/d3.quadtiles.js"></script>
 <script src="http://www.jasondavies.com/maps/raster/d3.geo.raster.js"></script>
 <script src="d3.geo.vector.js"></script>
@@ -163,15 +171,15 @@ queue()
 	rateById.set(d.BU_CODE, +d.P_GEHUWD);
 	})
 	.await(ready);
-	
+var projection;	
 function ready(error, cbs){
-var projection;
+
 var ratio = window.devicePixelRatio || 1,
     width = 1280 * ratio,
     height = 1024 * ratio,
     p = .5 * ratio;
 
-projection = d3.geo.berghaus()
+projection = d3.geo.mercator()
     .rotate([0, 0])
     .center([5, 52.4])
     .scale(80000 * ratio)
@@ -206,5 +214,39 @@ var layer = d3.select("#map")
 	
 	
 	
+}
+var tobemerged
+function merge() {
+
+	 tobemerged= {"type":"FeatureCollection","features":[]};
+	for (feat in gjson){
+		if(gjson[feat].merged) {
+			var geometry = {};
+			geometry.type="MultiPolygon";
+			geometry.coordinates = [];
+			for(k in gjson[feat].geoms) {
+				if(gjson[feat].geoms[k].type=="Polygon"){
+				geometry.coordinates.push(gjson[feat].geoms[k].coordinates);
+				}
+				else {
+				
+				geometry.coordinates = geometry.coordinates.concat(gjson[feat].geoms[k].coordinates);
+				}
+			}
+			gjson[feat].feature.geometry  = geometry;
+			var buff = turf.buffer(gjson[feat].feature,0);
+			
+			
+			tobemerged.features = tobemerged.features.concat(buff.features);	
+		 
+		 
+		 
+		}
+	}
+d3.select(".test").append("svg").attr("style","width:1280px;height:1024px").attr("class","mergelaag").append("svg:g").attr("class", "laag").selectAll("path").data(tobemerged.features).enter().append("svg:path").attr("d",path).attr("stroke","red")
+}
+function clear() {
+	gjson = {};
+	d3.select(".test").select(".mergelaag").remove();
 }
 </script>
