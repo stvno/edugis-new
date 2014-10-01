@@ -122,7 +122,7 @@ blockquote {
 }
 
 .laag path {
-	stroke:red;
+	stroke:black;
 }
 .tile path {
 
@@ -235,7 +235,9 @@ function merge() {
 			}
 			gjson[feat].feature.geometry  = geometry;
 			var buff = turf.buffer(gjson[feat].feature,0);
-			
+			for(var i = 0; i < buff.features.length;i++) {
+				buff.features[i].properties = gjson[feat].feature.properties;
+			}
 			
 			tobemerged.features = tobemerged.features.concat(buff.features);	
 		 
@@ -243,7 +245,12 @@ function merge() {
 		 
 		}
 	}
-d3.select(".test").append("svg").attr("style","width:1280px;height:1024px").attr("class","mergelaag").append("svg:g").attr("class", "laag").selectAll("path").data(tobemerged.features).enter().append("svg:path").attr("d",path).attr("stroke","red")
+d3.select(".test").append("svg").attr("style","width:1280px;height:1024px").attr("class","mergelaag").append("svg:g").attr("class", "laag").selectAll("path").data(tobemerged.features).enter().append("svg:path").attr("class", function(d) { 
+			  return quantize(rateById.get(d.properties.bu_code)) + ' ' + d.properties.bu_code; 
+			  })
+			.attr("key", function(d){ 
+			return d.properties.bu_code
+			}).attr("d",path)
 }
 function clear() {
 	gjson = {};
