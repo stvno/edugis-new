@@ -12,13 +12,13 @@ d3.geo.vector = function(projection,style) {
       url = null,      
       scaleExtent = [0, Infinity],
       subdomains = ["a", "b", "c", "d"];  
-
+	var features = {};
   //check if there is a style object given
   typeof style == "undefined"?style = function(){return 'vector'}:style;
   
   function redraw(layer) {
     // TODO improve zoom level computation
-    var z = Math.max(scaleExtent[0], Math.min(scaleExtent[1], (Math.log(projection.scale()) / Math.LN2 | 0) - 6)),
+     var z = Math.max(scaleExtent[0], Math.min(scaleExtent[1], (Math.log(projection.scale()) / Math.LN2 | 0) - 6)),
         pot = z + 6,
         ds = projection.scale() / (1 << pot),
         t = projection.translate();
@@ -28,97 +28,54 @@ d3.geo.vector = function(projection,style) {
     var tile = layer.selectAll(".tile")
         .data(d3.quadTiles(projection, z), key);
 
-    tile.enter().append("svg")
-        .attr("class", "tile")
+    tile.enter().append("tile")
+        .attr("hidden", "true")
         .each(function(d) {            
             var svg = this,              
             k = d.key;
             //retrieve the topojson and send it to the onload funtion
-            this._xhr = d3.json(url({x: k[0], y: k[1], z: k[2], subdomain: subdomains[(k[0] * 31 + k[1]) % subdomains.length]}), function(error, json) { onload(d, svg, pot, json)
+            this._xhr = d3.json(url({x: k[0], y: k[1], z: k[2], subdomain: subdomains[(k[0] * 31 + k[1]) % subdomains.length]}), function(error, json) { onload(d, json)
             });
         });
     tile.exit().remove();
   }
   
-  function onload(d, svg, pot, json) {
-
-	var features = topojson.feature(json, json.objects.vectile);
-
-
-	features.features.forEach(function(f){					
-				var id = f.id;
-				var key = d.key.toString();		
-					if(!f.type) {
-					console.log(f)
-					}
-				if(!gjson[id]){
-					var item = {};
-					item.feature = {};
-					item.feature.properties  = f.properties;
-					item.feature.id = f.id;
-					item.feature.type = f.type;
-					item.geoms = {};
-					item.geoms[key] = f.geometry;
-					gjson[id] = item;
-				}
-				else {
-					gjson[id].geoms[key] = f.geometry;
-					gjson[id].merged = true;
-				};
-	});
+  function onload(d, json) {
+		var geojson = topojson.feature(json, json.objects.vectile);
+	    var features = redraw.features();
+		geojson.features.forEach(function(f){					
+			var id = f.id;
+			var key = d.key.toString();		
+			if(!features[id]){
+				var item = {};
+				item.feature = {};
+				item.feature.properties  = f.properties;
+				item.feature.id = f.id;
+				item.feature.type = f.type;
+				item.geoms = {};
+				item.geoms[key] = f.geometry;
+				features[id] = item;
+			}
+			else {
+				features[id].geoms[key] = f.geometry;
+				//merge the lot
+				features[id].merged = true;
+			};
+		});
+		redraw.features(features);
 	
 				
 	
-    var t = projection.translate(),
-        s = projection.scale(),
-        c = projection.clipExtent(),
-        dx = svg.clientWidth,
-        dy = svg.clientHeight,
-        k = d.key;
-               
-    projection.translate([0, 0]).scale(1 << pot).clipExtent(null);
-          
-    svg.width = dx, svg.height = dy;
-    var bounds = path.bounds(d),
-        x0 = d.x0 = bounds[0][0] | 0,
-        y0 = d.y0 = bounds[0][1] | 0,
-        x1 = bounds[1][0] + 1 | 0,
-        y1 = bounds[1][1] + 1 | 0;
-        
-    var width = svg.clientWidth = x1 - x0,
-        height = svg.clientHeight = y1 - y0;
-        d3.select(svg).style("width", width+"px");
-        d3.select(svg).style("height", height+"px");
-    
-    if (width > 0 && height > 0) {
-        //reproject the features within the SVG tile
-        path.projection()
-            .translate([-x0,-y0])
-             
-       var feat =  d3.select(svg).selectAll("path")
-            .data(topojson.feature(json, json.objects.vectile).features,function(d){
-				
-                return d.properties.bu_code;
-            })
-            .enter().append("path")
-            .attr("class", style)
-			.attr("key", function(d){ 
-			return d.properties.bu_code
-			})
-            .attr("d", path);
-		
-		
-    }
-    d3.select(svg)
-        .style("left", x0 + "px")
-        .style("top", y0 + "px");
-    projection.translate(t).scale(s).clipExtent(c);
   }
 
   redraw.url = function(_) {
     if (!arguments.length) return url;
     url = typeof _ === "string" ? urlTemplate(_) : _;
     return redraw;
+  };
+  
+  redraw.features = function(_) {
+	  return arguments.length ? (features = _, redraw) : features;
   };
 
   redraw.scaleExtent = function(_) {
