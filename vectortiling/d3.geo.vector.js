@@ -8,7 +8,7 @@ d3.geo.vector = function(projection,style) {
       url = null,      
       scaleExtent = [0, Infinity],
       subdomains = ["a", "b", "c", "d"];  
-	var features = {};
+	var features = [];
   //check if there is a style object given
   typeof style == "undefined"?style = function(){return 'vector'}:style;
   
@@ -21,7 +21,7 @@ d3.geo.vector = function(projection,style) {
 
     layer.style(prefix + "transform", "translate(" + t.map(pixel) + ")scale(" + ds + ")").attr("class","test");
 	
-	var svg = layer.select("svg");
+	
 		
 	
 	
@@ -33,7 +33,7 @@ d3.geo.vector = function(projection,style) {
         .each(function(d) {            
             var k = d.key;
             //retrieve the topojson and send it to the onload funtion
-            this._xhr = d3.json(url({x: k[0], y: k[1], z: k[2], subdomain: subdomains[(k[0] * 31 + k[1]) % subdomains.length]}), function(error, json) { onload(d, json, svg)
+            this._xhr = d3.json(url({x: k[0], y: k[1], z: k[2], subdomain: subdomains[(k[0] * 31 + k[1]) % subdomains.length]}), function(error, json) { onload(d, json, layer)
             });
         });
     tile.exit().remove();
@@ -45,16 +45,26 @@ d3.geo.vector = function(projection,style) {
 		geojson.features.forEach(function(f){					
 			var id = f.id;
 			var key = d.key.toString();		
-			if(!features[id]){
+			var merge = false;
+			var mergeid;
+			for(var i=0; i<features.length; i++) {
+				if(features[i].id == id) {
+				merge = true;
+				mergeid=i;
+				}
+			}
+			if(!merge){
 				var item = {};
+				item.id = id;
 				item.first = f;
+				item.feature = f;
 				item.geometries = {};
 				item.geometries[key] = f.geometry;
-				features[id] = item;
+				features.push(item);
 			}
 			else {
 				//TODO: add line functionality
-				var item = features[id];
+				var item = features[mergeid];
 				item.geometries[key] = f.geometry;
 				//merge the lot
 				var geometry = {type:"MultiPolygon",coordinates:[]};
@@ -75,15 +85,22 @@ d3.geo.vector = function(projection,style) {
 					buffer.features[i].id = item.first.id;
 				}
 				item.feature = buffer;
-				features[id] = item;
+				features[mergeid] = item;
 				
 			};
 		});
 		redraw.features(features);
-		svg.select("g")
-		.selectAll("path")
-		 .data(features,function(d){return d.feature})
-				
+		var paths = svg.select("g")
+		.selectAll("path").data(features)
+		.attr("d", function(d){return path(d.feature)})
+		
+		paths
+		 .enter().append("path")
+		 .attr("id", function(d){return d.id})
+		 .attr("d", function(d){return path(d.feature)})		
+		 .attr("class", style)
+		  
+		paths.exit().remove();
 	
   }
 
