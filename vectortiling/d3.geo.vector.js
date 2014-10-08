@@ -1,14 +1,10 @@
 // Copyright 2014, Jason Davies, http://www.jasondavies.com/
 // modified by Steven M. Ottens https://github.com/stvno
-//SMO global json
-var gjson = {};
-var gid = [];
-var G1, G2, G3, G4, G5;
-var path;
+
 (function() {
 
 d3.geo.vector = function(projection,style) {
-   path = d3.geo.path().projection(projection),
+  var path = d3.geo.path().projection(projection),
       url = null,      
       scaleExtent = [0, Infinity],
       subdomains = ["a", "b", "c", "d"];  
@@ -24,23 +20,26 @@ d3.geo.vector = function(projection,style) {
         t = projection.translate();
 
     layer.style(prefix + "transform", "translate(" + t.map(pixel) + ")scale(" + ds + ")").attr("class","test");
-
+	
+	var svg = layer.select("svg");
+		
+	
+	
     var tile = layer.selectAll(".tile")
         .data(d3.quadTiles(projection, z), key);
 
     tile.enter().append("tile")
         .attr("hidden", "true")
         .each(function(d) {            
-            var svg = this,              
-            k = d.key;
+            var k = d.key;
             //retrieve the topojson and send it to the onload funtion
-            this._xhr = d3.json(url({x: k[0], y: k[1], z: k[2], subdomain: subdomains[(k[0] * 31 + k[1]) % subdomains.length]}), function(error, json) { onload(d, json)
+            this._xhr = d3.json(url({x: k[0], y: k[1], z: k[2], subdomain: subdomains[(k[0] * 31 + k[1]) % subdomains.length]}), function(error, json) { onload(d, json, svg)
             });
         });
     tile.exit().remove();
   }
   
-  function onload(d, json) {
+  function onload(d, json, svg) {
 		var geojson = topojson.feature(json, json.objects.vectile);
 	    var features = redraw.features();
 		geojson.features.forEach(function(f){					
@@ -48,22 +47,42 @@ d3.geo.vector = function(projection,style) {
 			var key = d.key.toString();		
 			if(!features[id]){
 				var item = {};
-				item.feature = {};
-				item.feature.properties  = f.properties;
-				item.feature.id = f.id;
-				item.feature.type = f.type;
-				item.geoms = {};
-				item.geoms[key] = f.geometry;
+				item.first = f;
+				item.geometries = {};
+				item.geometries[key] = f.geometry;
 				features[id] = item;
 			}
 			else {
-				features[id].geoms[key] = f.geometry;
+				//TODO: add line functionality
+				var item = features[id];
+				item.geometries[key] = f.geometry;
 				//merge the lot
-				features[id].merged = true;
+				var geometry = {type:"MultiPolygon",coordinates:[]};
+				for(k in item.geometries) {
+					if(item.geometries[k].type=="Polygon"){
+						geometry.coordinates.push(item.geometries[k].coordinates);
+					}
+					else {
+					
+						geometry.coordinates = geometry.coordinates.concat(item.geometries[k].coordinates);
+					}
+				}
+				var temp = item.first;
+				temp.geometry = geometry;
+				var buffer = turf.buffer(temp,0);
+				for(var i = 0; i < buffer.features.length;i++) {
+					buffer.features[i].properties = item.first.properties;
+					buffer.features[i].id = item.first.id;
+				}
+				item.feature = buffer;
+				features[id] = item;
+				
 			};
 		});
 		redraw.features(features);
-	
+		svg.select("g")
+		.selectAll("path")
+		 .data(features,function(d){return d.feature})
 				
 	
   }

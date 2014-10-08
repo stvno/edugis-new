@@ -158,7 +158,7 @@ stroke:black;
 
 <script src="turf.js"></script>
 <script src="http://www.jasondavies.com/maps/d3.quadtiles.js"></script>
-<script src="http://www.jasondavies.com/maps/raster/d3.geo.raster.js"></script>
+<!--script src="http://www.jasondavies.com/maps/raster/d3.geo.raster.js"></script-->
 <script src="d3.geo.vector.js"></script>
 
 <script>
@@ -171,10 +171,11 @@ var quantize = d3.scale.quantize()
 	
 queue()
     .defer(d3.tsv, "buurten.tsv", function(d) { 
-	rateById.set(d.BU_CODE, +d.P_GEHUWD);
+	  rateById.set(d.BU_CODE, +d.P_GEHUWD);
 	})
 	.await(ready);
-var projection;	
+	
+
 function ready(error, cbs){
 
 var ratio = window.devicePixelRatio || 1,
@@ -182,20 +183,23 @@ var ratio = window.devicePixelRatio || 1,
     height = 1024 * ratio,
     p = .5 * ratio;
 
-projection = d3.geo.mercator()
+var projection = d3.geo.mercator()
     .rotate([0, 0])
     .center([5, 52.4])
     .scale(80000 * ratio)
     .translate([width / 2, height / 2])
     .clipExtent([[p, p], [width - p, height - p]]);
 
+var path = d3.geo.path()
+    .projection(projection);
+
 var vector = d3.geo.vector(projection,function(d) { 
-			  return quantize(rateById.get(d.properties.bu_code)) + ' ' + d.properties.bu_code; 
-			  })
+		return quantize(rateById.get(d.properties.bu_code)) + ' ' + d.properties.bu_code; 
+	})
     .scaleExtent([0, 14])
     .url("/buurtenid/{z}/{x}/{y}.topojson");
 
-var layer = d3.select("#map")
+var kaart = d3.select("#map")
     .style("width", width / ratio + "px")
     .style("height", height / ratio + "px")
     .call(d3.behavior.zoom()
@@ -206,15 +210,20 @@ var layer = d3.select("#map")
         var t = d3.event.translate,
             s = d3.event.scale;
         projection.translate([t[0] * ratio, t[1] * ratio]).scale(s * ratio);
-        layer.call(vector);
+        kaart.call(vector);
       }))
   .append("div")
     .style(prefix + "transform", "scale(" + 1 / ratio + ")")
     .style(prefix + "transform-origin", "0 0 0")
-  .append("div")
+  .append("svg")
     .style(prefix + "transform-origin", "0 0 0")
-    .call(vector);
-	
+    .call(vector);/*
+  .append("svg")
+	.attr("width", width)
+    .attr("height", height)
+  .append("g");*/
+  
+		
 	
 	
 }
