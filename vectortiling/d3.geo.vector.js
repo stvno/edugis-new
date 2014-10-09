@@ -109,12 +109,12 @@ d3.geo.vector = function(projection,style) {
 				//TODO: check for empty coordinates
 				var temp = item.first;
 				temp.geometry = geometry;
-				var buffer = turf.buffer(temp,0);
+				/*var buffer = turf.buffer(temp,0);
 				for(var i = 0; i < buffer.features.length;i++) {
 					buffer.features[i].properties = item.first.properties;
 					buffer.features[i].id = item.first.id;
 				}
-				item.feature = buffer;
+				item.feature = buffer;*/
 				features[mergeid] = item;
 				
 			};
