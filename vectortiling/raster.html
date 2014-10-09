@@ -158,7 +158,6 @@ stroke:black;
 
 <script src="turf.js"></script>
 <script src="http://www.jasondavies.com/maps/d3.quadtiles.js"></script>
-<!--script src="http://www.jasondavies.com/maps/raster/d3.geo.raster.js"></script-->
 <script src="d3.geo.vector.js"></script>
 
 <script>
@@ -168,28 +167,26 @@ var rateById = d3.map();
 var quantize = d3.scale.quantize()
     .domain([0, 100])
     .range(d3.range(9).map(function(i) { return "q" + i + "-9"; }));
-	
+
 queue()
     .defer(d3.tsv, "buurten.tsv", function(d) { 
-	  rateById.set(d.BU_CODE, +d.P_GEHUWD);
+		rateById.set(d.BU_CODE, +d.P_GEHUWD);
 	})
 	.await(ready);
-	
 
 function ready(error, cbs){
 
 var ratio = window.devicePixelRatio || 1,
     width = 1280 * ratio,
-    height = 1024 * ratio,
-    p = .5 * ratio;
-
+    height = 1024 * ratio;
+ 
 var projection = d3.geo.mercator()
     .rotate([0, 0])
     .center([5, 52.4])
     .scale(80000 * ratio)
-    .translate([width / 2, height / 2])
-    .clipExtent([[p, p], [width - p, height - p]]);
-
+    .translate([0,0])
+    .clipExtent([[0,0], [width, height]]);
+  
 var path = d3.geo.path()
     .projection(projection);
 
@@ -202,69 +199,21 @@ var vector = d3.geo.vector(projection,function(d) {
 var kaart = d3.select("#map")
     .style("width", width / ratio + "px")
     .style("height", height / ratio + "px")
-    .call(d3.behavior.zoom()
-      .translate([.5 * width / ratio, .5 * height / ratio])
-      .scale(projection.scale() / ratio)
-      .scaleExtent([1e2, 5e6])
-      .on("zoom", function() {
-        var t = d3.event.translate,
-            s = d3.event.scale;
-        projection.translate([t[0] * ratio, t[1] * ratio]).scale(s * ratio);
-        kaart.call(vector);
-      }))
-  .append("div")
-    .style(prefix + "transform", "scale(" + 1 / ratio + ")")
-    .style(prefix + "transform-origin", "0 0 0")
-  .append("svg")
-    .style(prefix + "transform-origin", "0 0 0")
-    .call(vector)
+	.append("svg")
 	.attr("width", width/ratio)
-    .attr("height", height/ratio);
-  
-  kaart.append("g");
-		
+    .attr("height", height/ratio)
+    .call(d3.behavior.zoom()
+		.scale(projection.scale() / ratio)
+		.scaleExtent([1e2, 5e6])
+		.on("zoom", function() {
+			var t = d3.event.translate,
+            s = d3.event.scale;
+			projection.translate([t[0] * ratio, t[1] * ratio]).scale(s * ratio);
+			kaart.call(vector);
+		})
+	)
+	.append("g")
+	.call(vector)
 	
-	
-}
-var tobemerged
-function merge() {
-
-	 tobemerged= {"type":"FeatureCollection","features":[]};
-	for (feat in gjson){
-		if(gjson[feat].merged) {
-			var geometry = {};
-			geometry.type="MultiPolygon";
-			geometry.coordinates = [];
-			for(k in gjson[feat].geoms) {
-				if(gjson[feat].geoms[k].type=="Polygon"){
-				geometry.coordinates.push(gjson[feat].geoms[k].coordinates);
-				}
-				else {
-				
-				geometry.coordinates = geometry.coordinates.concat(gjson[feat].geoms[k].coordinates);
-				}
-			}
-			gjson[feat].feature.geometry  = geometry;
-			var buff = turf.buffer(gjson[feat].feature,0);
-			for(var i = 0; i < buff.features.length;i++) {
-				buff.features[i].properties = gjson[feat].feature.properties;
-			}
-			
-			tobemerged.features = tobemerged.features.concat(buff.features);	
-		 
-		 
-		 
-		}
-	}
-d3.select(".test").append("svg").attr("style","width:1280px;height:1024px").attr("class","mergelaag").append("svg:g").attr("class", "laag").selectAll("path").data(tobemerged.features).enter().append("svg:path").attr("class", function(d) { 
-			  return quantize(rateById.get(d.properties.bu_code)) + ' ' + d.properties.bu_code; 
-			  })
-			.attr("key", function(d){ 
-			return d.properties.bu_code
-			}).attr("d",path)
-}
-function clear() {
-	gjson = {};
-	d3.select(".test").select(".mergelaag").remove();
 }
 </script>
