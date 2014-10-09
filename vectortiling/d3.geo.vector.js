@@ -19,12 +19,12 @@ d3.geo.vector = function(projection,style) {
         ds = projection.scale() / (1 << pot),
         t = projection.translate();
 
-    layer.style(prefix + "transform", "translate(" + t.map(pixel) + ")scale(" + ds + ")").attr("class","gd3-layer");
+    layer.style(prefix + "transform", "translate(" + t.map(pixel) + ")scale(" + ds + ")").attr("class","gd3-layer").append("g");
     
     var tile = layer.selectAll(".tile")
         .data(d3.quadTiles(projection, z), key);
 
-    tile.enter().append("g")        
+    tile.enter().append("tile")        
         .attr("class", "tile")
         .each(function(d) { 
             var tile = this;
