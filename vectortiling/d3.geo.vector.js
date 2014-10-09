@@ -19,7 +19,8 @@ d3.geo.vector = function(projection,style) {
         ds = projection.scale() / (1 << pot),
         t = projection.translate();
 
-    layer.style(prefix + "transform", "translate(" + t.map(pixel) + ")scale(" + ds + ")").attr("class","test");
+  //  layer.style(prefix + "transform", "translate(" + t.map(pixel) + ")scale(" + ds + ")").attr("class","test");
+    layer.style(prefix + "transform", "translate(0px, 0px)scale(" + ds + ")").attr("class","test");
 	
 	
 		
@@ -29,17 +30,45 @@ d3.geo.vector = function(projection,style) {
         .data(d3.quadTiles(projection, z), key);
 
     tile.enter().append("tile")
-        .attr("hidden", "true")
-        .each(function(d) {            
+        /*.attr("hidden", "true")*/
+		.attr("class", "tile")
+        .each(function(d) { 
+			var tile = this;
             var k = d.key;
             //retrieve the topojson and send it to the onload funtion
-            this._xhr = d3.json(url({x: k[0], y: k[1], z: k[2], subdomain: subdomains[(k[0] * 31 + k[1]) % subdomains.length]}), function(error, json) { onload(d, json, layer)
+            this._xhr = d3.json(url({x: k[0], y: k[1], z: k[2], subdomain: subdomains[(k[0] * 31 + k[1]) % subdomains.length]}), function(error, json) { onload(d, json, layer, pot, tile)
             });
         });
-    tile.exit().remove();
+    tile.exit()
+		.each(function(d){
+			var k = d.key;
+			var features = redraw.features();
+			for(var i = features.length; i>0 ;i--) {
+				if(features[i-1].geometries[k]) {
+					delete features[i-1].geometries[k];
+					var empty = true;
+					for (var key in features[i-1].geometries) {
+						if (hasOwnProperty.call(features[i-1].geometries, key)) empty = false;
+					}
+					if(empty) {					
+						features.splice(i-1,1)
+					}
+				}
+			};
+			redraw.features(features);
+		}).remove();
   }
   
-  function onload(d, json, svg) {
+  function onload(d, json, layer, pot, tile) {
+   var t = projection.translate(),
+        s = projection.scale(),
+        c = projection.clipExtent(),
+        dx = tile.clientWidth,
+        dy = tile.clientHeight,
+        k = d.key;
+               
+    projection.translate([0, 0]).scale(1 << pot).clipExtent(null);
+          
 		var geojson = topojson.feature(json, json.objects.vectile);
 	    var features = redraw.features();
 		geojson.features.forEach(function(f){					
@@ -77,6 +106,7 @@ d3.geo.vector = function(projection,style) {
 						geometry.coordinates = geometry.coordinates.concat(item.geometries[k].coordinates);
 					}
 				}
+				//TODO: check for empty coordinates
 				var temp = item.first;
 				temp.geometry = geometry;
 				var buffer = turf.buffer(temp,0);
@@ -90,17 +120,39 @@ d3.geo.vector = function(projection,style) {
 			};
 		});
 		redraw.features(features);
-		var paths = svg.select("g")
-		.selectAll("path").data(features)
-		.attr("d", function(d){return path(d.feature)})
+	 tile.width = dx, tile.height = dy;
+    var bounds = path.bounds(d),
+        x0 = d.x0 = bounds[0][0] | 0,
+        y0 = d.y0 = bounds[0][1] | 0,
+        x1 = bounds[1][0] + 1 | 0,
+        y1 = bounds[1][1] + 1 | 0;
+        
+    var width = tile.width = x1 - x0,
+        height = tile.height = y1 - y0;
+        d3.select(tile).style("width", width+"px");
+        d3.select(tile).style("height", height+"px");	
+	 d3.select(tile)
+        .style("left", x0 + "px")
+        .style("top", y0 + "px");
+    projection.translate(t).scale(s).clipExtent(c);	
+		var paths = layer.select("g")
+		.selectAll("path").data(features,function(d){return d.id})
+		.attr("d", function(d){
+		 var p = path(d.feature);
+		 if(p==undefined) p="M0,0Z"
+		 return p})
 		
+		//TODO: filter out the empty paths
 		paths
 		 .enter().append("path")
 		 .attr("id", function(d){return d.id})
-		 .attr("d", function(d){return path(d.feature)})		
+		 .attr("d", function(d){
+		 var p = path(d.feature);
+		 if(p==undefined) p="M0,0Z"
+		 return p})		
 		 .attr("class", style)
 		  
-		paths.exit().remove();
+		paths.exit().each(function(d){console.log('remove path')}).remove();
 	
   }
 

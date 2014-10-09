@@ -219,9 +219,9 @@ var kaart = d3.select("#map")
     .style(prefix + "transform-origin", "0 0 0")
     .call(vector)
 	.attr("width", width/ratio)
-    .attr("height", height/ratio)
-  .append("g");
+    .attr("height", height/ratio);
   
+  kaart.append("g");
 		
 	
 	
